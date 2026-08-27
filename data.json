@@ -38,12 +38,6 @@
   ],
   "projects": [
     {
-      "id": "p4",
-      "applicant": "赵敏",
-      "members": "孙悦",
-      "brief": "教学辅助Agent：高中教师智能备课系统，根据教材章节自动生成教案、课件和课后习题。"
-    },
-    {
       "id": "p6",
       "applicant": "陈思",
       "members": "",
@@ -69,33 +63,6 @@
     }
   ],
   "scores": {
-    "p4": {
-      "j1": {
-        "items": {},
-        "penalty": 0,
-        "timestamp": 1724745600000
-      },
-      "j2": {
-        "items": {},
-        "penalty": 0,
-        "timestamp": 1724745600000
-      },
-      "j3": {
-        "items": {},
-        "penalty": 1,
-        "timestamp": 1724745600000
-      },
-      "j4": {
-        "items": {},
-        "penalty": 1,
-        "timestamp": 1724745600000
-      },
-      "j5": {
-        "items": {},
-        "penalty": 1,
-        "timestamp": 1724745600000
-      }
-    },
     "p6": {
       "j1": {
         "items": {},
@@ -192,12 +159,6 @@
         "total": 81.08,
         "judgeCount": 5,
         "grade": "二/三等奖"
-      },
-      {
-        "pid": "p4",
-        "total": 73.74,
-        "judgeCount": 5,
-        "grade": "入围"
       },
       {
         "pid": "p8",
