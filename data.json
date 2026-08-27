@@ -1,5 +1,13 @@
 {
-  "judges": [],
+  "judges": [
+    {
+      "id": "獴哥",
+      "name": "獴哥",
+      "avatar": "",
+      "username": "mengge",
+      "password": "123123"
+    }
+  ],
   "projects": [
     {
       "id": "多元智能信息采集系统",
