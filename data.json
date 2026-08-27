@@ -38,58 +38,14 @@
   ],
   "projects": [
     {
-      "id": "p8",
-      "applicant": "杨帆",
-      "members": "",
-      "brief": "翻译优化Agent：专业翻译术语管理与一致性检查，确保长文档术语统一，已翻译15万字。"
-    },
-    {
       "id": "多元智能信息采集系统",
       "applicant": "斑马",
       "members": "",
       "brief": "多元智能信息采集系统多元智能信息采集系统多元智能信息采集系统"
     }
   ],
-  "scores": {
-    "p8": {
-      "j1": {
-        "items": {},
-        "penalty": 0,
-        "timestamp": 1724745600000
-      },
-      "j2": {
-        "items": {},
-        "penalty": 0,
-        "timestamp": 1724745600000
-      },
-      "j3": {
-        "items": {},
-        "penalty": 0,
-        "timestamp": 1724745600000
-      },
-      "j4": {
-        "items": {},
-        "penalty": 1,
-        "timestamp": 1724745600000
-      },
-      "j5": {
-        "items": {},
-        "penalty": 0,
-        "timestamp": 1724745600000
-      }
-    }
-  },
-  "computed": {
-    "timestamp": 1724745600000,
-    "results": [
-      {
-        "pid": "p8",
-        "total": 67.22,
-        "judgeCount": 5,
-        "grade": "入围"
-      }
-    ]
-  },
+  "scores": {},
+  "computed": null,
   "projectPenalties": {},
   "adminPass": "admin123"
 }
