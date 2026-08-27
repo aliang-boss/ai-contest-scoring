@@ -38,12 +38,6 @@
   ],
   "projects": [
     {
-      "id": "p7",
-      "applicant": "林涛",
-      "members": "黄丽",
-      "brief": "设计助手Agent：UI设计师设计系统，自动生成组件变体和设计规范文档，已交付3个产品线。"
-    },
-    {
       "id": "p8",
       "applicant": "杨帆",
       "members": "",
@@ -57,33 +51,6 @@
     }
   ],
   "scores": {
-    "p7": {
-      "j1": {
-        "items": {},
-        "penalty": 0,
-        "timestamp": 1724745600000
-      },
-      "j2": {
-        "items": {},
-        "penalty": 1,
-        "timestamp": 1724745600000
-      },
-      "j3": {
-        "items": {},
-        "penalty": 0,
-        "timestamp": 1724745600000
-      },
-      "j4": {
-        "items": {},
-        "penalty": 0,
-        "timestamp": 1724745600000
-      },
-      "j5": {
-        "items": {},
-        "penalty": 1,
-        "timestamp": 1724745600000
-      }
-    },
     "p8": {
       "j1": {
         "items": {},
@@ -115,12 +82,6 @@
   "computed": {
     "timestamp": 1724745600000,
     "results": [
-      {
-        "pid": "p7",
-        "total": 81.08,
-        "judgeCount": 5,
-        "grade": "二/三等奖"
-      },
       {
         "pid": "p8",
         "total": 67.22,
