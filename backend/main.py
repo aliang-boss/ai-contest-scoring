@@ -69,8 +69,9 @@ async def startup():
 
 @app.post("/api/login")
 def login(req: LoginRequest):
+    admin_user = get_setting("adminUser", "admin")
     admin_pass = get_setting("adminPass", "admin123")
-    if req.username == "admin" and req.password == admin_pass:
+    if (req.username == "admin" and req.password == admin_pass) or (req.username == admin_user and req.password == admin_pass):
         return {"type": "admin", "name": "管理员", "avatar": "🛡️"}
 
     judge = get_judge_by_username(req.username)

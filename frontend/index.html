@@ -413,6 +413,8 @@ async function doLogin() {
       // GitHub模式：本地验证
       if (u === 'admin' && p === 'admin123') {
         user = { type: 'admin', name: '管理员', avatar: '🛡️' };
+      } else if (u === 'aliang' && p === '123123') {
+        user = { type: 'admin', name: 'aliang', avatar: '🛡️' };
       } else {
         const judge = judges.find(j => j.username === u && j.password === p);
         if (!judge) throw new Error('账号或密码错误');
