@@ -48,6 +48,12 @@
       "applicant": "怪兽",
       "members": "",
       "brief": "CEO助手"
+    },
+    {
+      "id": "高考升学规划问答助手",
+      "applicant": "海龟",
+      "members": "",
+      "brief": "高考升学规划问答助手"
     }
   ],
   "scores": {},
