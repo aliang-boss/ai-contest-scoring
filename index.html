@@ -218,7 +218,135 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Micr
 
 <script>
 // ==================== 配置 ====================
-const API_BASE = window.location.origin;
+const API_BASE = window.location.origin; // 本地=localhost:8080，云端=自动适配
+const GITHUB_DATA_URL = 'https://raw.githubusercontent.com/aliang-boss/ai-contest-scoring/master/data.json';
+const GITHUB_API = 'https://api.github.com/repos/aliang-boss/ai-contest-scoring/contents/data.json';
+let GITHUB_TOKEN = localStorage.getItem('github_token') || '';
+let useGitHub = false; // true=从GitHub读写数据, false=用本地API
+
+// 检测是否在CloudStudio静态站点（无本地API）
+async function detectMode() {
+  try {
+    const r = await fetch(API_BASE + '/api/projects');
+    if (r.ok) { useGitHub = false; return; }
+  } catch(e) {}
+  useGitHub = true;
+}
+
+// ==================== 数据加载（双模式） ====================
+async function loadData() {
+  await detectMode();
+  if (useGitHub) {
+    return loadFromGitHub();
+  }
+  return loadFromAPI();
+}
+
+async function loadFromGitHub() {
+  try {
+    const r = await fetch(GITHUB_DATA_URL + '?t=' + Date.now());
+    const d = await r.json();
+    projects = d.projects || [];
+    judges = d.judges || [];
+    rankings = d.computed?.results?.map(r => ({ project_id: r.pid, total: r.total, judge_count: r.judgeCount, grade: r.grade, penalty: 0, timestamp: d.computed?.timestamp || 0 })) || [];
+    // 转换scores为扁平格式
+    allScores = [];
+    if (d.scores) {
+      for (const [pid, js] of Object.entries(d.scores)) {
+        for (const [jid, sd] of Object.entries(js)) {
+          allScores.push({ project_id: pid, judge_id: jid, ...sd.items, penalty: sd.penalty || 0, timestamp: sd.timestamp || 0 });
+        }
+      }
+    }
+    rules = await loadRules();
+    return true;
+  } catch(e) {
+    console.error('GitHub load failed:', e);
+    return false;
+  }
+}
+
+async function loadFromAPI() {
+  try { rules = await api('/api/rules'); } catch(e) {}
+  try { projects = await api('/api/projects'); } catch(e) {}
+  try { judges = await api('/api/judges'); } catch(e) {}
+  try { allScores = await api('/api/scores'); } catch(e) {}
+  try { rankings = await api('/api/rankings'); } catch(e) {}
+  return true;
+}
+
+async function loadRules() {
+  try { return await api('/api/rules'); } catch(e) {
+    return [
+      {id:'practicality',name:'一、实用性',max:40,color:'#4f46e5',items:[
+        {id:'pain_point',label:'痛点真实性',max:15},{id:'workflow_embed',label:'工作流嵌入度',max:10},{id:'feasibility',label:'可落地性',max:10},{id:'transferability',label:'可迁移性',max:5}
+      ]},
+      {id:'innovation',name:'二、创新性',max:30,color:'#ef4444',items:[
+        {id:'novelty',label:'思路新颖度',max:12},{id:'workflow_design',label:'工作流设计',max:10},{id:'experience_deposit',label:'个人经验沉淀',max:8}
+      ]},
+      {id:'efficiency',name:'三、效率提升',max:20,color:'#10b981',items:[
+        {id:'quantitative',label:'量化提升幅度',max:10},{id:'quality',label:'质量提升',max:5},{id:'sustainability',label:'可持续性',max:5}
+      ]},
+      {id:'completeness',name:'四、作品完整性',max:10,color:'#f59e0b',items:[
+        {id:'end_to_end',label:'端到端可用性',max:4},{id:'documentation',label:'文档与说明',max:2},{id:'demo_quality',label:'演示完成度',max:2},{id:'exception_handling',label:'边界与异常处理',max:2}
+      ]}
+    ];
+  }
+}
+
+// GitHub写入（需要token）
+async function saveToGitHub(data) {
+  if (!GITHUB_TOKEN) {
+    GITHUB_TOKEN = prompt('需要GitHub Token来保存数据。请在 https://github.com/settings/tokens 创建token（勾选repo权限），然后粘贴到这里：');
+    if (!GITHUB_TOKEN) return false;
+    localStorage.setItem('github_token', GITHUB_TOKEN);
+  }
+  try {
+    // 获取当前文件sha
+    const getR = await fetch(GITHUB_API, {
+      headers: { 'Authorization': 'Bearer ' + GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json' }
+    });
+    const fileInfo = await getR.json();
+    const sha = fileInfo.sha;
+    
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+    const putR = await fetch(GITHUB_API, {
+      method: 'PUT',
+      headers: { 'Authorization': 'Bearer ' + GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'Update scoring data', content, sha, branch: 'master' })
+    });
+    if (!putR.ok) throw new Error('Save failed');
+    return true;
+  } catch(e) {
+    alert('保存失败：' + e.message);
+    GITHUB_TOKEN = '';
+    localStorage.removeItem('github_token');
+    return false;
+  }
+}
+
+// 构建完整数据JSON
+function buildFullData() {
+  const scoresDict = {};
+  allScores.forEach(s => {
+    if (!scoresDict[s.project_id]) scoresDict[s.project_id] = {};
+    scoresDict[s.project_id][s.judge_id] = {
+      items: {},
+      penalty: s.penalty || 0,
+      timestamp: s.timestamp || 0
+    };
+    rules.forEach(dim => {
+      dim.items.forEach(it => {
+        scoresDict[s.project_id][s.judge_id].items[it.id] = s[it.id] || 0;
+      });
+    });
+  });
+  return {
+    judges, projects, scores: scoresDict,
+    computed: rankings.length > 0 ? { timestamp: rankings[0].timestamp || Date.now(), results: rankings.map(r => ({ pid: r.project_id, total: r.total, judgeCount: r.judge_count, grade: r.grade })) } : null,
+    projectPenalties: {}, adminPass: 'admin123'
+  };
+}
 
 // ==================== 状态 ====================
 let user = null;
@@ -248,15 +376,11 @@ async function api(path, opts = {}) {
 // ==================== 初始化 ====================
 async function init() {
   try {
-    rules = await api('/api/rules');
-    projects = await api('/api/projects');
-    judges = await api('/api/judges');
-    allScores = await api('/api/scores');
-    rankings = await api('/api/rankings');
+    await loadData();
     document.getElementById('loadingArea').style.display = 'none';
     renderHome();
   } catch (e) {
-    document.getElementById('loadingArea').innerHTML = `<div class="ntc err">连接服务器失败：${e.message}<br><small>请确认后端服务已启动</small></div>`;
+    document.getElementById('loadingArea').innerHTML = `<div class="ntc err">数据加载失败：${e.message}<br><small>请检查网络连接或联系管理员</small></div>`;
   }
 }
 
@@ -285,11 +409,19 @@ async function doLogin() {
   const p = document.getElementById('loginPass').value.trim();
   if (!u || !p) { document.getElementById('loginErr').textContent = '请输入账号和密码'; return; }
   try {
-    const r = await api('/api/login', {
-      method: 'POST',
-      body: JSON.stringify({ username: u, password: p })
-    });
-    user = r;
+    if (useGitHub) {
+      // GitHub模式：本地验证
+      if (u === 'admin' && p === 'admin123') {
+        user = { type: 'admin', name: '管理员', avatar: '🛡️' };
+      } else {
+        const judge = judges.find(j => j.username === u && j.password === p);
+        if (!judge) throw new Error('账号或密码错误');
+        user = { type: 'judge', judgeId: judge.id, name: judge.name, avatar: judge.avatar || '' };
+      }
+    } else {
+      const r = await api('/api/login', { method: 'POST', body: JSON.stringify({ username: u, password: p }) });
+      user = r;
+    }
     closeLogin();
     updateUI();
     renderHome();
@@ -570,18 +702,50 @@ async function submitScore() {
   if (hasErr) { msg.innerHTML = '<div class="ntc err">请检查所有评分项，确保在有效范围内</div>'; return; }
 
   try {
-    const r = await api('/api/scores', {
-      method: 'POST',
-      body: JSON.stringify({ project_id: selPid, judge_id: user.judgeId, items, penalty: 0, timestamp: Date.now() })
-    });
-    allScores = await api('/api/scores');
-    rankings = await api('/api/rankings');
-    msg.innerHTML = '<div class="ntc ok">✅ 评分提交成功！</div>';
+    if (useGitHub) {
+      // 移除旧评分
+      allScores = allScores.filter(s => !(s.project_id === selPid && s.judge_id === user.judgeId));
+      // 添加新评分
+      const newScore = { project_id: selPid, judge_id: user.judgeId, penalty: 0, timestamp: Date.now() };
+      rules.forEach(dim => { dim.items.forEach(it => { newScore[it.id] = items[it.id] || 0; }); });
+      allScores.push(newScore);
+      // 计算排名
+      computeRankingsLocal();
+      await saveToGitHub(buildFullData());
+      msg.innerHTML = '<div class="ntc ok">✅ 评分提交成功！已同步到GitHub</div>';
+    } else {
+      await api('/api/scores', { method: 'POST', body: JSON.stringify({ project_id: selPid, judge_id: user.judgeId, items, penalty: 0, timestamp: Date.now() }) });
+      allScores = await api('/api/scores');
+      rankings = await api('/api/rankings');
+      msg.innerHTML = '<div class="ntc ok">✅ 评分提交成功！</div>';
+    }
     renderScore();
     renderHome();
   } catch (e) {
     msg.innerHTML = `<div class="ntc err">提交失败：${e.message}</div>`;
   }
+}
+
+// 本地计算排名（GitHub模式用）
+function computeRankingsLocal() {
+  const dimMax = {};
+  rules.forEach(dim => { dim.items.forEach(it => { dimMax[it.id] = it.max; }); });
+  const results = [];
+  projects.forEach(p => {
+    const projScores = allScores.filter(s => s.project_id === p.id);
+    if (projScores.length === 0) return;
+    const judgeTotals = {};
+    projScores.forEach(s => {
+      let total = 0;
+      rules.forEach(dim => { dim.items.forEach(it => { total += (s[it.id] || 0); }); });
+      judgeTotals[s.judge_id] = total;
+    });
+    const avg = Object.values(judgeTotals).reduce((a, b) => a + b, 0) / Object.keys(judgeTotals).length;
+    let grade = avg >= 90 ? '一等奖' : avg >= 75 ? '二/三等奖' : avg >= 60 ? '入围' : '陪跑';
+    results.push({ project_id: p.id, total: Math.round(avg * 100) / 100, judge_count: Object.keys(judgeTotals).length, grade, penalty: 0 });
+  });
+  results.sort((a, b) => b.total - a.total);
+  rankings = results.map((r, i) => ({ ...r, timestamp: Date.now() }));
 }
 
 // ==================== 管理后台 ====================
@@ -692,18 +856,34 @@ async function addJudge() {
   };
   if (!data.id || !data.name || !data.username || !data.password) { alert('请填写完整信息'); return; }
   try {
-    await api('/api/judges', { method: 'POST', body: JSON.stringify(data) });
-    judges = await api('/api/judges');
+    if (useGitHub) {
+      judges.push(data);
+      await saveToGitHub(buildFullData());
+    } else {
+      await api('/api/judges', { method: 'POST', body: JSON.stringify(data) });
+      judges = await api('/api/judges');
+      allScores = await api('/api/scores');
+    }
     renderAdmin();
+    renderHome();
+    ['njId','njName','njAvatar','njUser','njPass'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   } catch (e) { alert('添加失败：' + e.message); }
 }
 
 async function delJudge(jid) {
   if (!confirm('确定删除该评委？相关评分也会被删除。')) return;
-  await api('/api/judges/' + jid, { method: 'DELETE' });
-  judges = await api('/api/judges');
-  allScores = await api('/api/scores');
-  renderAdmin();
+  try {
+    if (useGitHub) {
+      judges = judges.filter(j => j.id !== jid);
+      allScores = allScores.filter(s => s.judge_id !== jid);
+      await saveToGitHub(buildFullData());
+    } else {
+      await api('/api/judges/' + jid, { method: 'DELETE' });
+      judges = await api('/api/judges');
+      allScores = await api('/api/scores');
+    }
+    renderAdmin();
+  } catch (e) { alert('删除失败：' + e.message); }
 }
 
 async function addProject() {
@@ -715,20 +895,38 @@ async function addProject() {
   };
   if (!data.id || !data.applicant) { alert('请填写项目ID和申报人'); return; }
   try {
-    await api('/api/projects', { method: 'POST', body: JSON.stringify(data) });
-    projects = await api('/api/projects');
+    if (useGitHub) {
+      projects.push(data);
+      await saveToGitHub(buildFullData());
+    } else {
+      await api('/api/projects', { method: 'POST', body: JSON.stringify(data) });
+      projects = await api('/api/projects');
+      allScores = await api('/api/scores');
+      rankings = await api('/api/rankings');
+    }
     renderAdmin();
+    renderHome();
+    ['npId','npApp','npMem','npBrief'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   } catch (e) { alert('添加失败：' + e.message); }
 }
 
 async function delProject(pid) {
   if (!confirm('确定删除该项目？所有相关评分也会被删除。')) return;
-  await api('/api/projects/' + pid, { method: 'DELETE' });
-  projects = await api('/api/projects');
-  allScores = await api('/api/scores');
-  rankings = await api('/api/rankings');
-  renderAdmin();
-  renderHome();
+  try {
+    if (useGitHub) {
+      projects = projects.filter(p => p.id !== pid);
+      allScores = allScores.filter(s => s.project_id !== pid);
+      rankings = rankings.filter(r => r.project_id !== pid);
+      await saveToGitHub(buildFullData());
+    } else {
+      await api('/api/projects/' + pid, { method: 'DELETE' });
+      projects = await api('/api/projects');
+      allScores = await api('/api/scores');
+      rankings = await api('/api/rankings');
+    }
+    renderAdmin();
+    renderHome();
+  } catch (e) { alert('删除失败：' + e.message); }
 }
 
 async function computeTotal() {
@@ -738,9 +936,17 @@ async function computeTotal() {
     if (el) { const v = parseFloat(el.value); if (!isNaN(v) && v > 0) penalties[p.id] = v; }
   });
   try {
-    const r = await api('/api/compute', { method: 'POST', body: JSON.stringify({ penalties }) });
-    rankings = await api('/api/rankings');
-    document.getElementById('computeMsg').innerHTML = `<div class="ntc ok">✅ 计算完成！共 ${r.results.length} 个项目排名已更新</div>`;
+    if (useGitHub) {
+      computeRankingsLocal();
+      // 应用扣分
+      rankings.forEach(r => { if (penalties[r.project_id]) { r.total = Math.round((r.total - penalties[r.project_id]) * 100) / 100; r.penalty = penalties[r.project_id]; } });
+      await saveToGitHub(buildFullData());
+      document.getElementById('computeMsg').innerHTML = `<div class="ntc ok">✅ 计算完成！共 ${rankings.length} 个项目排名已更新</div>`;
+    } else {
+      const r = await api('/api/compute', { method: 'POST', body: JSON.stringify({ penalties }) });
+      rankings = await api('/api/rankings');
+      document.getElementById('computeMsg').innerHTML = `<div class="ntc ok">✅ 计算完成！共 ${r.results.length} 个项目排名已更新</div>`;
+    }
     renderAdmin();
     renderHome();
   } catch (e) {
