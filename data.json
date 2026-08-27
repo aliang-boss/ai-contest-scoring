@@ -1,13 +1,5 @@
 {
-  "judges": [
-    {
-      "id": "j5",
-      "name": "评委E（AI专家）",
-      "avatar": "🤖",
-      "username": "judge5",
-      "password": "123456"
-    }
-  ],
+  "judges": [],
   "projects": [
     {
       "id": "多元智能信息采集系统",
