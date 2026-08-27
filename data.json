@@ -50,12 +50,6 @@
       "brief": "教学辅助Agent：高中教师智能备课系统，根据教材章节自动生成教案、课件和课后习题。"
     },
     {
-      "id": "p5",
-      "applicant": "周杰",
-      "members": "吴昊,郑雨",
-      "brief": "法律审查Agent：法务合同审查工具，自动识别20+类风险条款并提供修改建议和法条引用。"
-    },
-    {
       "id": "p6",
       "applicant": "陈思",
       "members": "",
@@ -132,33 +126,6 @@
       "j5": {
         "items": {},
         "penalty": 1,
-        "timestamp": 1724745600000
-      }
-    },
-    "p5": {
-      "j1": {
-        "items": {},
-        "penalty": 0,
-        "timestamp": 1724745600000
-      },
-      "j2": {
-        "items": {},
-        "penalty": 0,
-        "timestamp": 1724745600000
-      },
-      "j3": {
-        "items": {},
-        "penalty": 0,
-        "timestamp": 1724745600000
-      },
-      "j4": {
-        "items": {},
-        "penalty": 0,
-        "timestamp": 1724745600000
-      },
-      "j5": {
-        "items": {},
-        "penalty": 0,
         "timestamp": 1724745600000
       }
     },
@@ -250,12 +217,6 @@
       {
         "pid": "p6",
         "total": 92.12,
-        "judgeCount": 5,
-        "grade": "一等奖"
-      },
-      {
-        "pid": "p5",
-        "total": 90.44,
         "judgeCount": 5,
         "grade": "一等奖"
       },
