@@ -111,8 +111,26 @@
       "brief": ""
     }
   ],
-  "scores": {},
-  "computed": null,
+  "scores": {
+    "艺术院校专业代码和对系统": {
+      "河马": {
+        "items": {},
+        "penalty": 0,
+        "timestamp": 1787822046301
+      }
+    }
+  },
+  "computed": {
+    "timestamp": 1787822046301,
+    "results": [
+      {
+        "pid": "艺术院校专业代码和对系统",
+        "total": 0,
+        "judgeCount": 1,
+        "grade": "陪跑"
+      }
+    ]
+  },
   "projectPenalties": {},
   "adminPass": "admin123"
 }
