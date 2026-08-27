@@ -78,6 +78,12 @@
       "applicant": "飞蛾",
       "members": "",
       "brief": "AI选校匹配系统"
+    },
+    {
+      "id": "多智能体协作助手",
+      "applicant": "小熊",
+      "members": "",
+      "brief": "多智能体协作"
     }
   ],
   "scores": {},
