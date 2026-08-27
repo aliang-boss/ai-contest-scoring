@@ -38,12 +38,6 @@
   ],
   "projects": [
     {
-      "id": "p6",
-      "applicant": "陈思",
-      "members": "",
-      "brief": "医疗诊断Agent：辅助诊断系统，基于症状描述生成鉴别诊断列表，已通过200例回溯验证。"
-    },
-    {
       "id": "p7",
       "applicant": "林涛",
       "members": "黄丽",
@@ -63,33 +57,6 @@
     }
   ],
   "scores": {
-    "p6": {
-      "j1": {
-        "items": {},
-        "penalty": 0,
-        "timestamp": 1724745600000
-      },
-      "j2": {
-        "items": {},
-        "penalty": 0,
-        "timestamp": 1724745600000
-      },
-      "j3": {
-        "items": {},
-        "penalty": 1,
-        "timestamp": 1724745600000
-      },
-      "j4": {
-        "items": {},
-        "penalty": 0,
-        "timestamp": 1724745600000
-      },
-      "j5": {
-        "items": {},
-        "penalty": 0,
-        "timestamp": 1724745600000
-      }
-    },
     "p7": {
       "j1": {
         "items": {},
@@ -148,12 +115,6 @@
   "computed": {
     "timestamp": 1724745600000,
     "results": [
-      {
-        "pid": "p6",
-        "total": 92.12,
-        "judgeCount": 5,
-        "grade": "一等奖"
-      },
       {
         "pid": "p7",
         "total": 81.08,
