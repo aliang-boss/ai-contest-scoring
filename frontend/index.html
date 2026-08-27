@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>艺术升AI应用大赛 · 评委打分系统</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<style>
+:root{--bg:#f0f2f5;--card:#fff;--text:#1a1a2e;--t2:#6b7280;--bd:#e5e7eb;--pri:#4f46e5;--pl:#eef2ff;--g:#10b981;--w:#f59e0b;--r:#ef4444;--sh:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);--rd:16px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+.topbar{background:linear-gradient(135deg,#1e1b4b,#312e81,#4f46e5);color:#fff;padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(0,0,0,.15)}
+.topbar h1{font-size:19px;font-weight:700;letter-spacing:-.5px}
+.topbar .tr{display:flex;align-items:center;gap:12px}
+.topbar .utag{font-size:12px;background:rgba(255,255,255,.15);padding:5px 14px;border-radius:20px;font-weight:500}
+.btn-ghost{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;padding:7px 16px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:600;transition:.2s}
+.btn-ghost:hover{background:rgba(255,255,255,.25)}
+.wrap{max-width:1400px;margin:0 auto;padding:24px 16px}
+.nav{display:flex;gap:2px;margin-bottom:24px;background:var(--card);border-radius:14px;padding:5px;box-shadow:var(--sh)}
+.nav-btn{flex:1;padding:13px 18px;border:none;background:transparent;border-radius:11px;cursor:pointer;font-size:14px;font-weight:600;color:var(--t2);transition:.2s;display:flex;align-items:center;justify-content:center;gap:6px}
+.nav-btn:hover{color:var(--pri);background:var(--pl)}
+.nav-btn.active{background:var(--pri);color:#fff;box-shadow:0 4px 12px rgba(79,70,229,.3)}
+.panel{display:none}
+.panel.active{display:block}
+.card{background:var(--card);border-radius:var(--rd);padding:24px;box-shadow:var(--sh);margin-bottom:20px;border:1px solid var(--bd)}
+.card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.card-hd h3{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.dot.blue{background:#4f46e5}.dot.green{background:#10b981}.dot.amber{background:#f59e0b}.dot.red{background:#ef4444}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.proj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.proj-card{border:2px solid var(--bd);border-radius:14px;padding:18px;cursor:pointer;transition:.2s;background:#fff;position:relative}
+.proj-card:hover{border-color:var(--pri);box-shadow:0 4px 20px rgba(79,70,229,.1);transform:translateY(-2px)}
+.proj-card.selected{border-color:var(--pri);background:var(--pl);box-shadow:0 4px 20px rgba(79,70,229,.15)}
+.proj-card .pc-avatar{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;margin-bottom:10px}
+.proj-card .pc-name{font-size:15px;font-weight:700;margin-bottom:3px}
+.proj-card .pc-members{font-size:11px;color:var(--t2);margin-bottom:6px}
+.proj-card .pc-brief{font-size:12px;color:var(--t2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.proj-card .pc-footer{display:flex;gap:10px;margin-top:10px;font-size:11px;color:var(--t2)}
+.proj-card .pc-footer span{background:#f3f4f6;padding:3px 8px;border-radius:6px}
+.proj-card .pc-badge{position:absolute;top:10px;right:10px;background:#10b981;color:#fff;font-size:10px;padding:3px 8px;border-radius:10px;font-weight:600}
+.chip-row{display:flex;gap:8px;flex-wrap:wrap}
+.chip{padding:8px 18px;border-radius:22px;border:2px solid var(--bd);cursor:pointer;font-size:13px;font-weight:600;transition:.2s;background:#fff;text-align:center}
+.chip:hover{border-color:var(--pri);background:var(--pl)}
+.chip.active{background:var(--pri);color:#fff;border-color:var(--pri)}
+.dim-block{margin-bottom:20px}
+.dim-block .dim-ttl{font-size:14px;font-weight:700;margin-bottom:10px;padding:10px 16px;background:var(--pl);border-radius:10px;display:flex;justify-content:space-between;align-items:center}
+.dim-row{display:grid;gap:6px}
+.dim-it{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#f9fafb;border-radius:8px;transition:.2s}
+.dim-it:hover{background:#eef2ff}
+.dim-it .dl{font-size:13px;font-weight:500;flex:1}
+.dim-it .dm{font-size:10px;color:var(--t2);margin:0 8px;min-width:24px}
+.dim-it input{width:54px;padding:6px 8px;border:2px solid var(--bd);border-radius:7px;font-size:13px;font-weight:700;text-align:center;outline:none;transition:.2s}
+.dim-it input:focus{border-color:var(--pri);box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+.dim-it input.err{border-color:var(--r);background:#fef2f2}
+.penalty-bar{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#fffbeb;border-radius:10px;border:1px dashed var(--w)}
+.btn{padding:8px 20px;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:6px}
+.btn-pri{background:var(--pri);color:#fff}
+.btn-pri:hover{background:#4338ca;box-shadow:0 4px 12px rgba(79,70,229,.3)}
+.btn-danger{background:#fef2f2;color:var(--r);border:1px solid #fecaca}
+.btn-danger:hover{background:#fee2e2}
+.btn-success{background:#ecfdf5;color:var(--g);border:1px solid #a7f3d0}
+.btn-warn{background:#fffbeb;color:#d97706;border:1px solid #fde68a}
+.btn-xl{width:100%;padding:14px;font-size:15px;justify-content:center;margin-top:8px}
+.ntc{padding:10px 16px;border-radius:8px;font-size:12px;margin-bottom:12px;line-height:1.5}
+.ntc.info{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
+.ntc.ok{background:#ecfdf5;color:#059669;border:1px solid #a7f3d0}
+.ntc.warn{background:#fffbeb;color:#d97706;border:1px solid #fde68a}
+.ntc.err{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+.rank-list{display:flex;flex-direction:column;gap:8px}
+.rank-it{display:flex;align-items:center;gap:12px;padding:14px 18px;background:#f9fafb;border-radius:12px;border:1px solid var(--bd);transition:.2s}
+.rank-it:hover{box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.rank-it:nth-child(1){background:linear-gradient(135deg,#fefce8,#fef3c7);border-color:#fde68a}
+.rank-it:nth-child(2){background:linear-gradient(135deg,#f8fafc,#e2e8f0);border-color:#cbd5e1}
+.rank-it:nth-child(3){background:linear-gradient(135deg,#fef2f2,#fecaca);border-color:#fca5a5}
+.rank-num{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0}
+.rank-num.g1{background:#f59e0b;color:#fff}.rank-num.g2{background:#94a3b8;color:#fff}.rank-num.g3{background:#ef4444;color:#fff}.rank-num.gn{background:#e5e7eb;color:#6b7280}
+.rank-info{flex:1;min-width:0}
+.rank-info .ri-name{font-weight:700;font-size:14px}
+.rank-info .ri-desc{font-size:11px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank-score{font-size:22px;font-weight:800;color:var(--pri);min-width:70px;text-align:right}
+.rank-grade{font-size:11px;padding:4px 10px;border-radius:12px;font-weight:600;white-space:nowrap}
+.rg-l1{background:#fef3c7;color:#92400e}.rg-l2{background:#e0e7ff;color:#3730a3}.rg-l3{background:#dbeafe;color:#1e40af}.rg-l4{background:#e5e7eb;color:#6b7280}
+.radar-box{position:relative;height:360px}
+.radar-box canvas{width:100%!important;height:100%!important}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{background:#f8fafc;padding:10px 12px;text-align:left;font-weight:700;border-bottom:2px solid var(--bd);white-space:nowrap}
+.tbl td{padding:10px 12px;border-bottom:1px solid #f3f4f6}
+.tbl tr:hover td{background:#f8faff}
+.adm-section{margin-bottom:28px}
+.adm-section h4{font-size:15px;font-weight:700;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--bd);display:flex;align-items:center;gap:8px}
+.frm-row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.frm-row input,.frm-row textarea{padding:10px 14px;border:2px solid var(--bd);border-radius:9px;font-size:13px;outline:none;transition:.2s;background:#fff}
+.frm-row input:focus,.frm-row textarea:focus{border-color:var(--pri);box-shadow:0 0 0 3px rgba(79,70,229,.06)}
+.frm-row input{flex:1;min-width:140px}
+.frm-row textarea{flex:2;min-width:200px;resize:vertical;height:64px}
+.list-item{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;background:#f9fafb;border-radius:9px;margin-bottom:6px;font-size:13px;border:1px solid var(--bd)}
+.list-item:hover{background:#eef2ff}
+.list-item .li-info{flex:1;min-width:0}
+.list-item .li-name{font-weight:600}
+.list-item .li-desc{font-size:11px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btn-xs{padding:4px 10px;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer}
+.upload-zone{border:2px dashed var(--bd);border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:.2s;margin-bottom:12px;background:#fafbfc}
+.upload-zone:hover{border-color:var(--pri);background:var(--pl)}
+.upload-zone .up-icon{font-size:32px;margin-bottom:6px}
+.upload-zone .up-text{font-size:13px;color:var(--t2)}
+.upload-zone .up-hint{font-size:11px;color:var(--t2);margin-top:2px}
+.badge{display:inline-block;padding:4px 10px;border-radius:10px;font-size:11px;font-weight:600}
+.badge-yes{background:#ecfdf5;color:#059669}
+.badge-no{background:#fef3c7;color:#d97706}
+.empty{text-align:center;padding:40px 20px;color:var(--t2)}
+.empty .empty-icon{font-size:40px;margin-bottom:8px}
+.empty .empty-text{font-size:14px}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal{background:#fff;border-radius:20px;padding:36px;width:380px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal h2{text-align:center;margin-bottom:4px;font-size:20px}
+.modal .sub{text-align:center;color:var(--t2);font-size:12px;margin-bottom:20px}
+.modal .rt{display:flex;gap:4px;margin-bottom:20px;background:#f3f4f6;border-radius:12px;padding:4px}
+.modal .rt-btn{flex:1;padding:10px;border:none;background:transparent;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--t2);transition:.2s}
+.modal .rt-btn.active{background:var(--pri);color:#fff}
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:12px;font-weight:600;margin-bottom:5px;color:var(--t2)}
+.fg input{width:100%;padding:11px 14px;border:2px solid var(--bd);border-radius:10px;font-size:14px;outline:none;transition:.2s}
+.fg input:focus{border-color:var(--pri)}
+.login-btn{width:100%;padding:12px;border:none;border-radius:10px;background:var(--pri);color:#fff;font-size:15px;font-weight:700;cursor:pointer;margin-top:6px;transition:.2s}
+.login-btn:hover{background:#4338ca}
+.login-err{color:var(--r);font-size:11px;text-align:center;margin-top:6px;min-height:16px}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:var(--card);border-radius:var(--rd);padding:20px;box-shadow:var(--sh);border:1px solid var(--bd);text-align:center}
+.stat-card .st-num{font-size:32px;font-weight:800;color:var(--pri)}
+.stat-card .st-label{font-size:12px;color:var(--t2);margin-top:4px}
+.intro-page{text-align:center;padding:60px 20px}
+.intro-page h2{font-size:36px;font-weight:900;background:linear-gradient(135deg,#1e1b4b,#4f46e5);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px}
+.intro-page .subtitle{font-size:16px;color:var(--t2);margin-bottom:40px;line-height:1.8}
+.intro-page .enter-btn{padding:16px 48px;font-size:18px;font-weight:800;border:none;border-radius:16px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;cursor:pointer;box-shadow:0 8px 30px rgba(79,70,229,.3);transition:.2s}
+.intro-page .enter-btn:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(79,70,229,.4)}
+.loading{text-align:center;padding:40px;color:var(--t2)}
+.spinner{display:inline-block;width:32px;height:32px;border:3px solid var(--bd);border-top-color:var(--pri);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:1024px){.grid2,.grid3{grid-template-columns:1fr}.stats-row{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.stats-row{grid-template-columns:1fr 1fr}.topbar{padding:0 16px}.topbar h1{font-size:16px}}
+</style>
+</head>
+<body>
+
+<!-- ========== 武林介绍页 ========== -->
+<div id="introPage" class="intro-page" style="display:none">
+  <div style="max-width:700px;margin:0 auto">
+    <h2>⚔️ 艺术升AI应用大赛</h2>
+    <p class="subtitle">
+      天下英雄出我辈，一入江湖岁月催。<br>
+      今有八方豪杰，携AI神器汇聚于此，各展神通。<br>
+      五路评审坐镇，以实用、创新、效率、完整四维论剑，<br>
+      决出天下第一AI应用。
+    </p>
+    <div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-bottom:40px">
+      <div class="card" style="width:160px;text-align:center">
+        <div style="font-size:40px;margin-bottom:8px">🛡️</div>
+        <div style="font-weight:700">五路评审</div>
+        <div style="font-size:11px;color:var(--t2)">技术·业务·产品·行业·AI</div>
+      </div>
+      <div class="card" style="width:160px;text-align:center">
+        <div style="font-size:40px;margin-bottom:8px">⚡</div>
+        <div style="font-weight:700">四维论剑</div>
+        <div style="font-size:11px;color:var(--t2)">实用·创新·效率·完整</div>
+      </div>
+      <div class="card" style="width:160px;text-align:center">
+        <div style="font-size:40px;margin-bottom:8px">🏆</div>
+        <div style="font-weight:700">八路豪杰</div>
+        <div style="font-size:11px;color:var(--t2)">各显神通争第一</div>
+      </div>
+    </div>
+    <button class="enter-btn" onclick="enterSystem()">踏入江湖</button>
+  </div>
+</div>
+
+<!-- ========== 主系统 ========== -->
+<div id="mainApp" style="display:none">
+  <div class="topbar">
+    <h1>⚔️ 艺术升AI应用大赛</h1>
+    <div class="tr">
+      <span class="utag" id="userTag">未登录</span>
+      <button class="btn-ghost" id="btnLogin" onclick="openLogin()">登录</button>
+      <button class="btn-ghost" id="btnLogout" style="display:none" onclick="logout()">退出</button>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="nav">
+      <button class="nav-btn active" data-tab="home" onclick="switchTab('home')">🏠 大赛主页</button>
+      <button class="nav-btn" data-tab="score" onclick="switchTab('score')" id="navScore" style="display:none">✏️ 评委打分</button>
+      <button class="nav-btn" data-tab="admin" onclick="switchTab('admin')" id="navAdmin" style="display:none">⚙️ 管理后台</button>
+    </div>
+    <div id="loadingArea" class="loading"><div class="spinner"></div><p style="margin-top:12px;color:var(--t2)">正在加载数据...</p></div>
+    <div id="panelHome" class="panel active"></div>
+    <div id="panelScore" class="panel"></div>
+    <div id="panelAdmin" class="panel"></div>
+  </div>
+</div>
+
+<!-- ========== 登录弹窗 ========== -->
+<div id="loginModal" class="modal-bg" style="display:none">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h2>登录</h2>
+    <p class="sub">艺术升AI应用大赛 · 评审系统</p>
+    <div class="rt">
+      <button class="rt-btn active" id="rtJudge" onclick="setLoginRole('judge')">评委</button>
+      <button class="rt-btn" id="rtAdmin" onclick="setLoginRole('admin')">管理员</button>
+    </div>
+    <div class="fg"><label>账号</label><input id="loginUser" placeholder="评委账号或 admin"></div>
+    <div class="fg"><label>密码</label><input id="loginPass" type="password" placeholder="输入密码"></div>
+    <button class="login-btn" onclick="doLogin()">登 录</button>
+    <div class="login-err" id="loginErr"></div>
+    <button style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--t2)" onclick="closeLogin()">✕</button>
+  </div>
+</div>
+
+<script>
+// ==================== 配置 ====================
+const API_BASE = window.location.origin; // 自动适配：本地=localhost:8080，Render=xxx.onrender.com
+
+// ==================== 状态 ====================
+let user = null;
+let projects = [];
+let judges = [];
+let allScores = [];
+let rankings = [];
+let rules = [];
+let selPid = null;
+let loginRole = 'judge';
+let homeRadar = null;
+
+// ==================== API 调用 ====================
+async function api(path, opts = {}) {
+  const url = API_BASE + path;
+  const res = await fetch(url, {
+    headers: { 'Content-Type': 'application/json', ...opts.headers },
+    ...opts
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: '请求失败' }));
+    throw new Error(err.detail || '请求失败');
+  }
+  return res.json();
+}
+
+// ==================== 初始化 ====================
+async function init() {
+  try {
+    rules = await api('/api/rules');
+    projects = await api('/api/projects');
+    judges = await api('/api/judges');
+    allScores = await api('/api/scores');
+    rankings = await api('/api/rankings');
+    document.getElementById('loadingArea').style.display = 'none';
+    renderHome();
+  } catch (e) {
+    document.getElementById('loadingArea').innerHTML = `<div class="ntc err">连接服务器失败：${e.message}<br><small>请确认后端服务已启动</small></div>`;
+  }
+}
+
+// ==================== 介绍页 ====================
+function enterSystem() {
+  document.getElementById('introPage').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+  init();
+}
+
+// ==================== 登录 ====================
+function openLogin() {
+  document.getElementById('loginModal').style.display = 'flex';
+  document.getElementById('loginErr').textContent = '';
+}
+function closeLogin() {
+  document.getElementById('loginModal').style.display = 'none';
+}
+function setLoginRole(role) {
+  loginRole = role;
+  document.getElementById('rtJudge').classList.toggle('active', role === 'judge');
+  document.getElementById('rtAdmin').classList.toggle('active', role === 'admin');
+}
+async function doLogin() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value.trim();
+  if (!u || !p) { document.getElementById('loginErr').textContent = '请输入账号和密码'; return; }
+  try {
+    const r = await api('/api/login', {
+      method: 'POST',
+      body: JSON.stringify({ username: u, password: p })
+    });
+    user = r;
+    closeLogin();
+    updateUI();
+    renderHome();
+    if (user.type === 'judge') switchTab('score');
+  } catch (e) {
+    document.getElementById('loginErr').textContent = e.message;
+  }
+}
+function logout() {
+  user = null;
+  selPid = null;
+  updateUI();
+  renderHome();
+  switchTab('home');
+}
+function updateUI() {
+  if (user) {
+    document.getElementById('userTag').textContent = (user.avatar || '') + ' ' + user.name;
+    document.getElementById('btnLogin').style.display = 'none';
+    document.getElementById('btnLogout').style.display = '';
+    if (user.type === 'judge') {
+      document.getElementById('navScore').style.display = '';
+      document.getElementById('navAdmin').style.display = 'none';
+    } else {
+      document.getElementById('navScore').style.display = 'none';
+      document.getElementById('navAdmin').style.display = '';
+    }
+  } else {
+    document.getElementById('userTag').textContent = '未登录';
+    document.getElementById('btnLogin').style.display = '';
+    document.getElementById('btnLogout').style.display = 'none';
+    document.getElementById('navScore').style.display = 'none';
+    document.getElementById('navAdmin').style.display = 'none';
+  }
+}
+
+// ==================== Tab 切换 ====================
+function switchTab(tab) {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  ['home', 'score', 'admin'].forEach(t => {
+    document.getElementById('panel' + t[0].toUpperCase() + t.slice(1)).classList.toggle('active', t === tab);
+  });
+  if (tab === 'home') renderHome();
+  if (tab === 'score') renderScore();
+  if (tab === 'admin') renderAdmin();
+}
+
+// ==================== 主页 ====================
+async function renderHome() {
+  try {
+    projects = await api('/api/projects');
+    rankings = await api('/api/rankings');
+    allScores = await api('/api/scores');
+  } catch (e) {}
+
+  const panel = document.getElementById('panelHome');
+  const nProjects = projects.length;
+  const nJudges = judges.length;
+  const nScored = Object.keys(Object.fromEntries(allScores.map(s => [s.project_id + '-' + s.judge_id, true]))).length;
+  const nRanked = rankings.length;
+
+  let html = `
+    <div class="stats-row">
+      <div class="stat-card"><div class="st-num">${nProjects}</div><div class="st-label">参赛项目</div></div>
+      <div class="stat-card"><div class="st-num">${nJudges}</div><div class="st-label">评审团</div></div>
+      <div class="stat-card"><div class="st-num">${nScored}</div><div class="st-label">已完成评分</div></div>
+      <div class="stat-card"><div class="st-num">${nRanked}</div><div class="st-label">已排名</div></div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-hd"><h3><span class="dot blue"></span>参赛项目清单</h3><span style="font-size:12px;color:var(--t2)">共 ${nProjects} 个项目</span></div>
+        <div class="proj-grid">`;
+
+  projects.forEach(p => {
+    const sc = allScores.filter(s => s.project_id === p.id);
+    const scCount = new Set(sc.map(s => s.judge_id)).size;
+    const rk = rankings.find(r => r.project_id === p.id);
+    html += `
+      <div class="proj-card" onclick="showProjectDetail('${p.id}')">
+        <div class="pc-avatar">${p.applicant[0]}</div>
+        <div class="pc-name">${p.applicant}</div>
+        <div class="pc-members">${p.members ? '👥 ' + p.members : '无合作成员'}</div>
+        <div class="pc-brief">${p.brief}</div>
+        <div class="pc-footer"><span>📝 ${scCount}/${nJudges} 评委</span>${rk ? `<span>🏆 ${rk.total}分</span>` : ''}</div>
+        ${rk && rk.grade === '一等奖' ? '<div class="pc-badge">🥇</div>' : ''}
+      </div>`;
+  });
+
+  html += `</div></div>
+    <div class="card">
+      <div class="card-hd"><h3><span class="dot amber"></span>项目雷达图</h3>
+        <select id="radarSelect" onchange="updateRadar()" style="padding:6px 12px;border-radius:8px;border:2px solid var(--bd);font-size:13px">
+          ${projects.map(p => `<option value="${p.id}">${p.applicant}</option>`).join('')}
+        </select>
+      </div>
+      <div class="radar-box"><canvas id="radarCanvas"></canvas></div>
+    </div></div>`;
+
+  if (rankings.length > 0) {
+    html += `<div class="card">
+      <div class="card-hd"><h3><span class="dot green"></span>排名情况</h3>
+        <span style="font-size:12px;color:var(--t2)">✅ 已计算 (${new Date(rankings[0].timestamp).toLocaleString()})</span>
+      </div>
+      <div class="rank-list">`;
+    rankings.forEach((r, i) => {
+      const p = projects.find(pr => pr.id === r.project_id);
+      const ncls = i === 0 ? 'g1' : i === 1 ? 'g2' : i === 2 ? 'g3' : 'gn';
+      const gcls = r.grade === '一等奖' ? 'rg-l1' : r.grade === '二/三等奖' ? 'rg-l2' : r.grade === '入围' ? 'rg-l3' : 'rg-l4';
+      html += `
+        <div class="rank-it">
+          <div class="rank-num ${ncls}">${i + 1}</div>
+          <div class="rank-info">
+            <div class="ri-name">${p ? p.applicant : r.project_id}</div>
+            <div class="ri-desc">${p ? p.brief : ''}</div>
+          </div>
+          <span class="rank-grade ${gcls}">${r.grade}</span>
+          <div class="rank-score">${r.total}</div>
+        </div>`;
+    });
+    html += '</div></div>';
+  }
+
+  panel.innerHTML = html;
+  if (projects.length > 0) setTimeout(updateRadar, 200);
+}
+
+function showProjectDetail(pid) {
+  selPid = pid;
+  const p = projects.find(pr => pr.id === pid);
+  const sc = allScores.filter(s => s.project_id === pid);
+  const rk = rankings.find(r => r.project_id === pid);
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-bg';
+  modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+  modal.innerHTML = `
+    <div class="modal" style="width:500px;max-height:80vh;overflow-y:auto" onclick="event.stopPropagation()">
+      <h2>${p ? p.applicant : pid}</h2>
+      <p class="sub">${p ? p.brief : ''}</p>
+      ${rk ? `<div style="text-align:center;margin:12px 0"><span style="font-size:28px;font-weight:800;color:var(--pri)">${rk.total}</span> <span style="font-size:14px;color:var(--t2)">分</span> <span class="rank-grade ${rk.grade==='一等奖'?'rg-l1':rk.grade==='二/三等奖'?'rg-l2':'rg-l3'}">${rk.grade}</span></div>` : ''}
+      <table class="tbl">
+        <tr><th>评委</th><th>实用性</th><th>创新性</th><th>效率</th><th>完整性</th><th>总分</th></tr>
+        ${sc.map(s => {
+          const j = judges.find(jj => jj.id === s.judge_id);
+          const dimScores = { practicality: 0, innovation: 0, efficiency: 0, completeness: 0 };
+          rules.forEach(dim => {
+            dim.items.forEach(it => { dimScores[dim.id] += (s[it.id] || 0); });
+          });
+          const total = Object.values(dimScores).reduce((a, b) => a + b, 0);
+          return `<tr>
+            <td>${j ? j.avatar + ' ' + j.name : s.judge_id}</td>
+            <td>${dimScores.practicality.toFixed(1)}</td>
+            <td>${dimScores.innovation.toFixed(1)}</td>
+            <td>${dimScores.efficiency.toFixed(1)}</td>
+            <td>${dimScores.completeness.toFixed(1)}</td>
+            <td style="font-weight:700">${total.toFixed(1)}</td>
+          </tr>`;
+        }).join('')}
+      </table>
+      <button style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--t2)" onclick="this.closest('.modal-bg').remove()">✕</button>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+function updateRadar() {
+  const sel = document.getElementById('radarSelect');
+  if (!sel) return;
+  const pid = sel.value;
+  const p = projects.find(pr => pr.id === pid);
+  if (!p) return;
+  const sc = allScores.filter(s => s.project_id === pid);
+  if (homeRadar) homeRadar.destroy();
+  const ctx = document.getElementById('radarCanvas');
+  if (!ctx) return;
+
+  const labels = ['实用性(40)', '创新性(30)', '效率提升(20)', '完整性(10)'];
+  const dimScore = (sc, dimId) => {
+    let total = 0;
+    const dim = rules.find(d => d.id === dimId);
+    if (dim) dim.items.forEach(it => { total += (sc[it.id] || 0); });
+    return total;
+  };
+
+  const avgData = labels.map((_, i) => {
+    const dimId = ['practicality', 'innovation', 'efficiency', 'completeness'][i];
+    const vals = sc.map(s => dimScore(s, dimId));
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+  });
+
+  const maxData = labels.map((_, i) => {
+    const dimId = ['practicality', 'innovation', 'efficiency', 'completeness'][i];
+    const vals = sc.map(s => dimScore(s, dimId));
+    return vals.length ? Math.max(...vals) : 0;
+  });
+
+  homeRadar = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: labels,
+      datasets: [
+        { label: '平均分', data: avgData, backgroundColor: 'rgba(79,70,229,.15)', borderColor: '#4f46e5', borderWidth: 2, pointBackgroundColor: '#4f46e5' },
+        { label: '最高分', data: maxData, backgroundColor: 'rgba(16,185,129,.1)', borderColor: '#10b981', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#10b981' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { r: { beginAtZero: true, max: 40, ticks: { stepSize: 10, font: { size: 10 } } } },
+      plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } } }
+    }
+  });
+}
+
+// ==================== 评分页 ====================
+function renderScore() {
+  if (!user || user.type !== 'judge') {
+    document.getElementById('panelScore').innerHTML = '<div class="empty"><div class="empty-icon">🔒</div><div class="empty-text">请先以评委身份登录</div></div>';
+    return;
+  }
+  const panel = document.getElementById('panelScore');
+  panel.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+  const myScores = allScores.filter(s => s.judge_id === user.judgeId);
+  const scoredPids = new Set(myScores.map(s => s.project_id));
+
+  let html = '<div class="card"><div class="card-hd"><h3><span class="dot blue"></span>选择参赛项目</h3></div><div class="proj-grid">';
+  projects.forEach(p => {
+    const done = scoredPids.has(p.id);
+    html += `
+      <div class="proj-card ${selPid === p.id ? 'selected' : ''}" onclick="selPid='${p.id}';renderScore()">
+        <div class="pc-avatar">${p.applicant[0]}</div>
+        <div class="pc-name">${p.applicant}</div>
+        <div class="pc-brief">${p.brief}</div>
+        <div class="pc-footer">
+          <span>${done ? '✅ 已评分' : '⏳ 待评分'}</span>
+        </div>
+      </div>`;
+  });
+  html += '</div></div>';
+
+  if (selPid) {
+    const p = projects.find(pr => pr.id === selPid);
+    const oldScore = myScores.find(s => s.project_id === selPid);
+    html += `<div class="card"><div class="card-hd"><h3><span class="dot green"></span>评分：${p ? p.applicant : selPid}</h3></div>`;
+    rules.forEach(dim => {
+      html += `<div class="dim-block"><div class="dim-ttl"><span>${dim.name}</span><span style="font-size:12px;font-weight:400">满分 ${dim.max} 分</span></div><div class="dim-row">`;
+      dim.items.forEach(it => {
+        const val = oldScore ? (oldScore[it.id] || 0) : '';
+        html += `<div class="dim-it"><span class="dl">${it.label}</span><span class="dm">/ ${it.max}</span><input type="number" id="si_${it.id}" value="${val}" min="0" max="${it.max}" step="0.1" placeholder="0"></div>`;
+      });
+      html += '</div></div>';
+    });
+    html += `<div class="ntc info">提交后立即生效，可随时修改。评分范围0到各维度最大值。</div>
+      <div id="scoreMsg" style="min-height:20px;margin-bottom:8px"></div>
+      <button class="btn btn-pri btn-xl" onclick="submitScore()">${oldScore ? '🔄 更新评分' : '✅ 提交评分'}</button></div>`;
+  }
+
+  panel.innerHTML = html;
+}
+
+async function submitScore() {
+  if (!selPid || !user) return;
+  const msg = document.getElementById('scoreMsg');
+  const items = {};
+  let hasErr = false;
+  rules.forEach(dim => {
+    dim.items.forEach(it => {
+      const el = document.getElementById('si_' + it.id);
+      const v = el ? parseFloat(el.value) : 0;
+      if (isNaN(v) || v < 0 || v > it.max) {
+        if (el) el.classList.add('err');
+        hasErr = true;
+      } else {
+        if (el) el.classList.remove('err');
+      }
+      items[it.id] = isNaN(v) ? 0 : v;
+    });
+  });
+  if (hasErr) { msg.innerHTML = '<div class="ntc err">请检查所有评分项，确保在有效范围内</div>'; return; }
+
+  try {
+    const r = await api('/api/scores', {
+      method: 'POST',
+      body: JSON.stringify({ project_id: selPid, judge_id: user.judgeId, items, penalty: 0, timestamp: Date.now() })
+    });
+    allScores = await api('/api/scores');
+    rankings = await api('/api/rankings');
+    msg.innerHTML = '<div class="ntc ok">✅ 评分提交成功！</div>';
+    renderScore();
+    renderHome();
+  } catch (e) {
+    msg.innerHTML = `<div class="ntc err">提交失败：${e.message}</div>`;
+  }
+}
+
+// ==================== 管理后台 ====================
+async function renderAdmin() {
+  if (!user || user.type !== 'admin') {
+    document.getElementById('panelAdmin').innerHTML = '<div class="empty"><div class="empty-icon">🔒</div><div class="empty-text">请先以管理员身份登录</div></div>';
+    return;
+  }
+  try {
+    projects = await api('/api/projects');
+    judges = await api('/api/judges');
+    rankings = await api('/api/rankings');
+    allScores = await api('/api/scores');
+  } catch (e) {}
+
+  const panel = document.getElementById('panelAdmin');
+  let html = '';
+
+  // 评委管理
+  html += `<div class="adm-section"><h4>👥 评委管理</h4>`;
+  judges.forEach(j => {
+    html += `<div class="list-item"><div class="li-info"><span class="li-name">${j.avatar || ''} ${j.name}</span> <span class="li-desc">账号：${j.username} | 密码：${j.password}</span></div><button class="btn-xs btn-danger" onclick="delJudge('${j.id}')">删除</button></div>`;
+  });
+  html += `<div class="frm-row">
+    <input id="njId" placeholder="ID (如 j6)">
+    <input id="njName" placeholder="评委姓名">
+    <input id="njAvatar" placeholder="头像Emoji (如 👨‍💻)">
+    <input id="njUser" placeholder="登录账号">
+    <input id="njPass" placeholder="登录密码">
+    <button class="btn btn-pri" onclick="addJudge()">添加评委</button>
+  </div></div>`;
+
+  // 项目管理
+  html += `<div class="adm-section"><h4>📋 项目管理</h4>`;
+  projects.forEach(p => {
+    html += `<div class="list-item"><div class="li-info"><span class="li-name">${p.applicant}</span> <span class="li-desc">${p.brief}</span></div><button class="btn-xs btn-danger" onclick="delProject('${p.id}')">删除</button></div>`;
+  });
+  html += `<div class="frm-row">
+    <input id="npId" placeholder="项目ID (如 p9)">
+    <input id="npApp" placeholder="申报人姓名">
+    <input id="npMem" placeholder="成员 (逗号分隔)">
+    <input id="npBrief" placeholder="项目简介">
+    <button class="btn btn-pri" onclick="addProject()">添加项目</button>
+  </div>
+  <div class="upload-zone" onclick="document.getElementById('docxInput').click()">
+    <div class="up-icon">📄</div>
+    <div class="up-text">上传申报表 (DOCX) 批量导入</div>
+    <div class="up-hint">支持表格格式和冒号格式的申报表</div>
+  </div>
+  <input type="file" id="docxInput" accept=".docx" style="display:none" onchange="parseDocx(this)">
+  <div id="docxResult"></div></div>`;
+
+  // 计算总分
+  html += `<div class="adm-section"><h4>🧮 计算总分</h4>
+  <div class="ntc info">计算前可设置各项目超时扣分（管理员手动扣除）</div>
+  <div id="penaltyArea">`;
+  projects.forEach(p => {
+    const rk = rankings.find(r => r.project_id === p.id);
+    html += `<div class="frm-row" style="align-items:center">
+      <span style="min-width:80px;font-weight:600">${p.applicant}</span>
+      <span style="font-size:11px;color:var(--t2);flex:1">${p.brief.substring(0,30)}...</span>
+      <span style="font-size:12px;color:var(--t2)">超时扣分：</span>
+      <input id="pen_${p.id}" type="number" value="${rk ? rk.penalty || 0 : 0}" min="0" max="100" step="0.1" style="width:60px;padding:6px;border:2px solid var(--bd);border-radius:7px;text-align:center">
+    </div>`;
+  });
+  html += `</div>
+  <button class="btn btn-pri btn-xl" onclick="computeTotal()">📊 计算总分 & 排名</button>
+  <div id="computeMsg" style="margin-top:10px"></div></div>`;
+
+  // 评分表
+  html += `<div class="adm-section"><h4>📊 评分总览</h4>
+  <div style="overflow-x:auto"><table class="tbl">
+    <tr><th>项目</th>${judges.map(j => `<th>${j.avatar || ''} ${j.name}</th>`).join('')}<th>平均分</th><th>排名</th></tr>`;
+  projects.forEach(p => {
+    const sc = allScores.filter(s => s.project_id === p.id);
+    const rk = rankings.find(r => r.project_id === p.id);
+    html += `<tr><td>${p.applicant}</td>`;
+    judges.forEach(j => {
+      const s = sc.find(ss => ss.judge_id === j.id);
+      if (s) {
+        let total = 0;
+        rules.forEach(dim => { dim.items.forEach(it => { total += (s[it.id] || 0); }); });
+        html += `<td>${total.toFixed(1)}</td>`;
+      } else {
+        html += `<td style="color:var(--t2)">-</td>`;
+      }
+    });
+    html += `<td style="font-weight:700">${rk ? rk.total : '-'}</td><td>${rk ? rk.grade : '-'}</td></tr>`;
+  });
+  html += '</table></div></div>';
+
+  // 发布更新
+  html += `<div class="adm-section"><h4>🚀 发布更新</h4>
+  <div class="ntc warn">生成当前数据快照JSON，用于更新静态部署版本中的 APP_DATA 基线数据。</div>
+  <button class="btn btn-warn btn-xl" onclick="publishData()">📦 生成数据快照 JSON</button>
+  <div id="publishMsg" style="margin-top:10px"></div></div>`;
+
+  panel.innerHTML = html;
+}
+
+async function addJudge() {
+  const data = {
+    id: document.getElementById('njId').value.trim(),
+    name: document.getElementById('njName').value.trim(),
+    avatar: document.getElementById('njAvatar').value.trim(),
+    username: document.getElementById('njUser').value.trim(),
+    password: document.getElementById('njPass').value.trim()
+  };
+  if (!data.id || !data.name || !data.username || !data.password) { alert('请填写完整信息'); return; }
+  try {
+    await api('/api/judges', { method: 'POST', body: JSON.stringify(data) });
+    judges = await api('/api/judges');
+    allScores = await api('/api/scores');
+    renderAdmin();
+    renderHome();
+    ['njId','njName','njAvatar','njUser','njPass'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  } catch (e) { alert('添加失败：' + e.message); }
+}
+
+async function delJudge(jid) {
+  if (!confirm('确定删除该评委？相关评分也会被删除。')) return;
+  await api('/api/judges/' + jid, { method: 'DELETE' });
+  judges = await api('/api/judges');
+  allScores = await api('/api/scores');
+  renderAdmin();
+}
+
+async function addProject() {
+  const data = {
+    id: document.getElementById('npId').value.trim(),
+    applicant: document.getElementById('npApp').value.trim(),
+    members: document.getElementById('npMem').value.trim(),
+    brief: document.getElementById('npBrief').value.trim()
+  };
+  if (!data.id || !data.applicant) { alert('请填写项目ID和申报人'); return; }
+  try {
+    await api('/api/projects', { method: 'POST', body: JSON.stringify(data) });
+    projects = await api('/api/projects');
+    allScores = await api('/api/scores');
+    rankings = await api('/api/rankings');
+    renderAdmin();
+    renderHome();
+    ['npId','npApp','npMem','npBrief'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  } catch (e) { alert('添加失败：' + e.message); }
+}
+
+async function delProject(pid) {
+  if (!confirm('确定删除该项目？所有相关评分也会被删除。')) return;
+  await api('/api/projects/' + pid, { method: 'DELETE' });
+  projects = await api('/api/projects');
+  allScores = await api('/api/scores');
+  rankings = await api('/api/rankings');
+  renderAdmin();
+  renderHome();
+}
+
+async function computeTotal() {
+  const penalties = {};
+  projects.forEach(p => {
+    const el = document.getElementById('pen_' + p.id);
+    if (el) { const v = parseFloat(el.value); if (!isNaN(v) && v > 0) penalties[p.id] = v; }
+  });
+  try {
+    const r = await api('/api/compute', { method: 'POST', body: JSON.stringify({ penalties }) });
+    rankings = await api('/api/rankings');
+    document.getElementById('computeMsg').innerHTML = `<div class="ntc ok">✅ 计算完成！共 ${r.results.length} 个项目排名已更新</div>`;
+    renderAdmin();
+    renderHome();
+  } catch (e) {
+    document.getElementById('computeMsg').innerHTML = `<div class="ntc err">计算失败：${e.message}</div>`;
+  }
+}
+
+async function publishData() {
+  try {
+    const data = await api('/api/data');
+    const json = JSON.stringify(data, null, 2);
+    await navigator.clipboard.writeText(json);
+    document.getElementById('publishMsg').innerHTML = `<div class="ntc ok">✅ 数据快照已复制到剪贴板！<br>用于更新部署文件中的 APP_DATA 常量。</div>`;
+  } catch (e) {
+    document.getElementById('publishMsg').innerHTML = `<div class="ntc err">导出失败：${e.message}</div>`;
+  }
+}
+
+// ==================== DOCX 解析 ====================
+async function parseDocx(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const resultDiv = document.getElementById('docxResult');
+  resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>解析中...</p></div>';
+  try {
+    const zip = await JSZip.loadAsync(file);
+    const docXml = await zip.file("word/document.xml").async("string");
+    const text = docXml.replace(/<[^>]+>/g, '\n').replace(/\n+/g, '\n').trim();
+    const lines = text.split('\n').filter(l => l.trim());
+    const entries = parseAppEntries(lines);
+    if (entries.length === 0) {
+      resultDiv.innerHTML = '<div class="ntc warn">未能解析出有效项目，请检查DOCX格式</div>';
+      return;
+    }
+    let added = 0;
+    for (const e of entries) {
+      const pid = 'p' + (projects.length + added + 1);
+      try {
+        await api('/api/projects', { method: 'POST', body: JSON.stringify({ id: pid, applicant: e.applicant || '未知', members: e.members || '', brief: e.brief || '' }) });
+        added++;
+      } catch (err) {}
+    }
+    projects = await api('/api/projects');
+    resultDiv.innerHTML = `<div class="ntc ok">✅ 成功导入 ${added} 个项目</div>`;
+    renderAdmin();
+  } catch (e) {
+    resultDiv.innerHTML = `<div class="ntc err">解析失败：${e.message}</div>`;
+  }
+}
+
+function parseAppEntries(lines) {
+  const entries = [];
+  let current = null;
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    if (trimmed.includes('\t')) {
+      const parts = trimmed.split('\t');
+      if (parts.length >= 2) {
+        entries.push({ applicant: parts[0].trim(), members: parts[1] ? parts[1].trim() : '', brief: parts[2] ? parts[2].trim() : '' });
+      }
+    } else if (trimmed.includes('：') || trimmed.includes(':')) {
+      const m = trimmed.match(/^(?:申报人|申请人|姓名|参赛者)[：:]\s*(.+)/);
+      if (m) { current = { applicant: m[1].trim(), members: '', brief: '' }; continue; }
+      const m2 = trimmed.match(/^(?:成员|团队成员)[：:]\s*(.+)/);
+      if (m2 && current) { current.members = m2[1].trim(); continue; }
+      const m3 = trimmed.match(/^(?:项目简介|简介|说明|描述)[：:]\s*(.+)/);
+      if (m3 && current) { current.brief = m3[1].trim(); continue; }
+      const m4 = trimmed.match(/^(?:项目名称|课题名称)[：:]\s*(.+)/);
+      if (m4 && current) { current.brief = (current.brief ? current.brief + ' | ' : '') + m4[1].trim(); continue; }
+    } else {
+      if (current && current.applicant) {
+        if (!current.brief) current.brief = trimmed;
+        else if (!current.members) current.members = trimmed;
+      }
+    }
+  }
+  if (current && current.applicant) entries.push(current);
+  return entries;
+}
+
+// ==================== 启动 ====================
+document.getElementById('introPage').style.display = 'block';
+document.getElementById('mainApp').style.display = 'none';
+</script>
+</body>
+</html>
