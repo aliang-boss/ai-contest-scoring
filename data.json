@@ -1,13 +1,6 @@
 {
   "judges": [
     {
-      "id": "j2",
-      "name": "评委B（业务专家）",
-      "avatar": "👩‍💼",
-      "username": "judge2",
-      "password": "123456"
-    },
-    {
       "id": "j3",
       "name": "评委C（产品专家）",
       "avatar": "👨‍🔬",
