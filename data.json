@@ -38,12 +38,6 @@
   ],
   "projects": [
     {
-      "id": "p1",
-      "applicant": "张明",
-      "members": "李华",
-      "brief": "高考志愿填报AI助手：基于7年规划师经验，覆盖咨询前-中-后-录取跟踪完整工作流，已服务47个家庭。"
-    },
-    {
       "id": "p2",
       "applicant": "王芳",
       "members": "陈静,赵磊",
@@ -93,33 +87,6 @@
     }
   ],
   "scores": {
-    "p1": {
-      "j1": {
-        "items": {},
-        "penalty": 0,
-        "timestamp": 1724745600000
-      },
-      "j2": {
-        "items": {},
-        "penalty": 0,
-        "timestamp": 1724745600000
-      },
-      "j3": {
-        "items": {},
-        "penalty": 0,
-        "timestamp": 1724745600000
-      },
-      "j4": {
-        "items": {},
-        "penalty": 0,
-        "timestamp": 1724745600000
-      },
-      "j5": {
-        "items": {},
-        "penalty": 0,
-        "timestamp": 1724745600000
-      }
-    },
     "p2": {
       "j1": {
         "items": {},
@@ -313,12 +280,6 @@
   "computed": {
     "timestamp": 1724745600000,
     "results": [
-      {
-        "pid": "p1",
-        "total": 92.84,
-        "judgeCount": 5,
-        "grade": "一等奖"
-      },
       {
         "pid": "p6",
         "total": 92.12,
